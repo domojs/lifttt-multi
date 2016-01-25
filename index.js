@@ -15,28 +15,36 @@ module.exports={"name":"multi", "triggers":[
 	result.fields=fields;
 	return result;
 }},
-{"name":"L'un et l'autre", fields:[{ "name":"triggers", "displayName":"Evenements"},{ "name":"timeout", "displayName":"Timeout"}], "when":function(fields, callback){
+{"name":"L'un et l'autre", fields:[{ "name":"triggers", "displayName":"Evenements"},{ "name":"timeout", "displayName":"Timeout"}], when:function(fields, callback){
     var expired=false;
     var completed=[];
-    $.each(fields['triggers'], function(index, trigger){
-		parent.loadChannel(trigger.path).find(trigger.name).when(trigger.params, function(intemediateResult){
-            var timeout=setTimeout(function(){ expired=true; completed[index]=false; }, fields.timeout);
+    var timeout=0;
+    $.each(fields.triggers, function(index, trigger){
+        parent.loadChannel(trigger.path).find(trigger.name).when(trigger.params, function(intermediateResult){
+            if(!timeout)
+                timeout=setTimeout(function(){ expired=true; }, fields.timeout);
             completed[index]=true;
-		    if(!expired && timeout)
-		    {
-		        clearTimeout(timeout);
-		        completed[index]=intermediateResult;
-		    }
-		});
+            if(!expired && timeout)
+            {
+                clearTimeout(timeout);
+                completed[index]=intermediateResult;
+                if($.grep(completed, function(value){
+                    return !value;
+                }).length==0 && completed.length==fields.triggers.length)
+                {
+                    var result={};
+                    callback($.extend.apply(result, completed));
+                    completed=[];
+                    timeout=setTimeout(function(){ expired=true; }, fields.timeout);
+                }
+            }
+            else
+            {
+                completed=[];
+                timeout=setTimeout(function(){ expired=true; }, fields.timeout);
+            }
+        });
     });
-    
-    var test=function(){
-        if(!expired)
-            callback(result);
-        process.nextTick(function(){
-            when(fields, callback);
-        })
-    }
 }}
 ], "actions":[
 {"name":"macro", fields:[{ "name":"actions", "displayName":"Evenements"}], "delegate":function(fields, trigger, completed){
