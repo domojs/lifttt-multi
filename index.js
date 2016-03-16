@@ -51,7 +51,7 @@ module.exports={"name":"multi", "triggers":[
 	var result= function(){
 	    $.eachAsync(fields.actions, function(index, action, next){
 			var actionChannel=parent.loadChannel(action.path).find(action.name, 'action');
-			if(!ifttt.that(actionChannel.delegate.call(actionChannel, action.params,trigger), action.params, trigger, next))
+			if(!ifttt.that.call(actionChannel.delegate.call(actionChannel, action.params,trigger), action.params, trigger, next))
 				return false;
 	    }, completed);
 	};
